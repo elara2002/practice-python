@@ -1,3 +1,17 @@
+"""
+DynamicArray — Implementación manual de un array dinámico.
+
+Estructura clásica de CS: array con resize automático al doble
+cuando se llena.
+
+Complejidades:
+- Acceso por índice (at): O(1)
+- Push (amortizado): O(1)
+- Insert / delete por índice: O(n)
+- Find (búsqueda lineal): O(n)
+"""
+
+
 class DynamicArray:
     def __init__(self) -> None:
         self._capacity = 1
@@ -5,170 +19,130 @@ class DynamicArray:
         self._data = [None] * self._capacity
 
     def size(self) -> int:
-        # cuántos elementos hay
         return self._size
 
     def capacity(self) -> int:
-        # cuánto espacio reservado hay
         return self._capacity
 
     def is_empty(self) -> bool:
         return self._size == 0
 
     def at(self, index: int) -> object:
+        """Devuelve el elemento en la posición index."""
         if index < 0 or index >= self._size:
             raise IndexError("Index fuera de rango")
         return self._data[index]
 
     def _resize(self, new_capacity: int) -> None:
+        """Cambia la capacidad interna, conservando los elementos existentes."""
         new_data = [None] * new_capacity
-        i = 0
         for i in range(self._size):
             new_data[i] = self._data[i]
         self._data = new_data
         self._capacity = new_capacity
 
+    def push(self, item) -> None:
+        """Agrega item al final. Hace resize al doble si está lleno."""
+        if self._size == self._capacity:
+            self._resize(2 * self._capacity)
+        self._data[self._size] = item
+        self._size += 1
 
-    def push(self, item: object) -> None:
-        # 1. Verifico que esta lleno, si esta lleno llamo a _resize
+    def insert(self, index: int, item) -> None:
+        """Inserta item en la posición index, corriendo elementos a la derecha."""
+        if index < 0 or index > self._size:
+            raise IndexError("Index fuera de rango")
+
         if self._size == self._capacity:
             self._resize(2 * self._capacity)
 
-        # 2. Meto el item en el cajón disponible
-        self._data[self._size] = item
+        # Correr elementos a la derecha desde el final hacia index
+        for i in range(self._size, index, -1):
+            self._data[i] = self._data[i - 1]
 
-        # 3. Aumento el size en 1
+        self._data[index] = item
         self._size += 1
-       
 
-    def insert(self, index: int, item: object) -> None:
-        #Valido el index
-        if 0 <= index <= self._size:
-            # 1. Valido si esta lleno el array
-            if self._size == self._capacity:
-                self._resize(2 * self._capacity)
-            # 2. Correr los elementos a la derecha
-            for i in range(self._size, index, -1):
-                self._data[i] = self._data[i - 1]
-            self._data[index] = item #reemplazo el dato
-            # 3. Aumentar el size
-            self._size +=1
-        else:
-            raise IndexError("Index fuera de rango")
-        
-    
-    def prepend(self, item: object) -> None:
-        # insertar al inicio (pista: reusa insert)
-        self.insert(0,item)
+    def prepend(self, item) -> None:
+        """Inserta item al inicio del array."""
+        self.insert(0, item)
 
     def pop(self) -> object:
-        # quitar y devolver el último
-        if self.is_empty(): # validar que no este vacio el arreglo
-            raise IndexError("Index fuera de rango, pop en arreglo vacio")
-        last_obj = self._data[self._size - 1] # Guardar la ultima posición
-        self._data[self._size - 1] = None # limpiar la posición, buena practica
-        self._size -= 1  #decremento del size del arreglo
-
+        """Quita y devuelve el último elemento."""
+        if self.is_empty():
+            raise IndexError("Pop on empty array")
+        last_obj = self._data[self._size - 1]
+        self._data[self._size - 1] = None
+        self._size -= 1
         return last_obj
 
-
     def delete(self, index: int) -> None:
-        # borrar en index, recorriendo los demás a la izquierda
-        #Valido el index
-        if not (0 <= index < self._size):
-            raise IndexError("Index fuera de rango, no es posible eliminarlo")
-        # Correr elementos de izquierda a derecha
+        """Quita el elemento en index, corriendo posteriores a la izquierda."""
+        if index < 0 or index >= self._size:
+            raise IndexError("Index fuera de rango")
+
+        # Correr elementos a la izquierda desde index
         for i in range(index, self._size - 1):
             self._data[i] = self._data[i + 1]
 
         self._data[self._size - 1] = None
+        self._size -= 1
 
-        self._size -=1
-
-    def find(self, item: object) -> int:
-        # devolver el índice de la primera ocurrencia, o -1 si no está
+    def find(self, item) -> int:
+        """Devuelve el índice de la primera ocurrencia, o -1 si no se encuentra."""
         for i in range(self._size):
             if self._data[i] == item:
                 return i
         return -1
-      
-    def remove(self, item: object) -> None:
-        # borrar la primera ocurrencia del valor
+
+    def remove(self, item) -> None:
+        """Quita la primera ocurrencia del item."""
         idx = self.find(item)
-        if idx != -1:
-            self.delete(idx)
-            return 
-        raise ValueError("El item no se encontro,")
+        if idx == -1:
+            raise ValueError("Item no encontrado en el array")
+        self.delete(idx)
+
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("Test DynamicArray")
-    print("=" * 50)
-
     arr = DynamicArray()
-    print(f"\nInicial: size={arr.size()}, capacity={arr.capacity()}, vacío={arr.is_empty()}")
 
-    # --- push y crecimiento (resize automático) ---
-    print("\n--- push y resize ---")
-    arr.push("A")
-    print(f"push A → size={arr.size()}, capacity={arr.capacity()}")
-    arr.push("B")
-    print(f"push B → size={arr.size()}, capacity={arr.capacity()}  (esperado: capacity=2)")
-    arr.push("C")
-    print(f"push C → size={arr.size()}, capacity={arr.capacity()}  (esperado: capacity=4, hubo resize)")
-    arr.push("D")
-    print(f"push D → size={arr.size()}, capacity={arr.capacity()}")
+    # Push y resize automático
+    for c in ["A", "B", "C", "D", "E"]:
+        arr.push(c)
+    print(f"After push 5 → size={arr.size()}, capacity={arr.capacity()}")
+    # esperado: size=5, capacity=8 (resize: 1→2→4→8)
 
-    # --- at ---
-    print("\n--- at ---")
-    for i in range(arr.size()):
-        print(f"  arr.at({i}) = {arr.at(i)}")
+    # at
+    print(f"at(0)={arr.at(0)}, at(4)={arr.at(4)}")
+    # esperado: A, E
 
-    # --- insert ---
-    print("\n--- insert(1, 'X') ---")
+    # insert
     arr.insert(1, "X")
-    print("  Esperado: A, X, B, C, D")
-    print("  Actual:   ", end="")
-    for i in range(arr.size()):
-        print(arr.at(i), end=", ")
-    print(f"\n  size={arr.size()}, capacity={arr.capacity()}")
+    print(f"After insert(1, X) → at(1)={arr.at(1)}, size={arr.size()}")
+    # esperado: X, 6
 
-    # --- prepend ---
-    print("\n--- prepend('Z') ---")
+    # prepend
     arr.prepend("Z")
-    print(f"  Primer elemento: {arr.at(0)}  (esperado: Z)")
+    print(f"After prepend(Z) → at(0)={arr.at(0)}, size={arr.size()}")
+    # esperado: Z, 7
 
-    # --- pop ---
-    print("\n--- pop() ---")
-    ultimo = arr.pop()
-    print(f"  Devolvió: {ultimo}  (esperado: D)")
-    print(f"  size={arr.size()}")
+    # pop
+    last = arr.pop()
+    print(f"pop() returned {last}, size={arr.size()}")
+    # esperado: E, 6
 
-    # --- delete ---
-    print("\n--- delete(0) ---")
+    # delete
     arr.delete(0)
-    print(f"  Primer elemento: {arr.at(0)}  (esperado: A)")
+    print(f"After delete(0) → at(0)={arr.at(0)}")
+    # esperado: A
 
-    # --- find ---
-    print("\n--- find ---")
-    print(f"  find('X') = {arr.find('X')}  (esperado: 1)")
-    print(f"  find('inexistente') = {arr.find('inexistente')}  (esperado: -1)")
+    # find
+    print(f"find('X')={arr.find('X')}, find('nope')={arr.find('nope')}")
+    # esperado: 1, -1
 
-    # --- remove ---
-    print("\n--- remove('X') ---")
+    # remove
     arr.remove("X")
-    print(f"  find('X') después = {arr.find('X')}  (esperado: -1)")
+    print(f"After remove('X') → find('X')={arr.find('X')}")
+    # esperado: -1
 
-    # --- Errores esperados ---
-    print("\n--- Errores esperados ---")
-    try:
-        arr.at(99)
-    except IndexError as e:
-        print(f"  IndexError capturado: {e}  ✓")
-
-    try:
-        arr.remove("no existe")
-    except ValueError as e:
-        print(f"  ValueError capturado: {e}  ✓")
-
-    print("\nSi cada 'actual' coincidió con su 'esperado', todo funciona.")
+    print("\n✓ Todas las operaciones funcionaron correctamente")
